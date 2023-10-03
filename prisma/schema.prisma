@@ -10,83 +10,107 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  firstName String   @map("first_name") @db.VarChar(255)
+  lastName  String   @map("last_name") @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  mobile    String   @db.VarChar(15)
+  password  String   @db.VarChar(255)
+  otp       String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
 
-// Define the User model
-model Users {
-  id        Int       @id @default(autoincrement())
-  firstName String
-  lastName  String
-  email     String    @unique
-  mobile    String
-  password  String
-  otp       String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  customers Customer[]
-  invoices  Invoice[]
+  customers       Customer[]
+  categories      Categorie[]
+  products        Product[]
+  invoices        Invoice[]
+  invoiceProducts InvoiceProduct[]
+
+  @@map("users")
 }
 
-// Define the Customer model
 model Customer {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String?
-  mobile    String
-  user_id   BigInt
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      Users      @relation(fields: [userId], references: [id])
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  name      String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  mobile    String   @db.VarChar(15)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  invoices Invoice[]
+
+  users User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("customers")
 }
 
-// Define the Category model
-model Category {
-  id        BigInt       @id @default(autoincrement())
-  name      String
-  user_id    Int
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      Users      @relation(fields: [userId], references: [id])
-  products  Products[]
+model Categorie {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  products Product[]
+
+  users User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("categories")
 }
 
-// Define the Product model
-model Products {
-  id          BigInt      @id @default(autoincrement())
-  name        String
-  price       Float
-  unit        String
-  img_url     String?
-  category_id BigInt
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  category    Category @relation(fields: [categoryId], references: [id])
-  user      Users      @relation(fields: [userId], references: [id])
-  invoiceProducts InvoiceProduct[]
+model Product {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId     BigInt   @map("user_id") @db.UnsignedBigInt
+  categoryId BigInt   @map("category_id") @db.UnsignedBigInt
+  name       String   @db.VarChar(255)
+  price      String   @db.VarChar(10)
+  unit       String   @db.VarChar(255)
+  imageUrl   String   @map("image_url") @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  invoiceProducts InvoiceProduct?
+
+  users      User      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  categories Categorie @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("products")
 }
 
-// Define the Invoice model
 model Invoice {
-  id           Int      @id @default(autoincrement())
-  total        Float
-  discount     Float
-  vat          Float
-  payable      Float
-  userId       Int
-  customerId   Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User    @relation(fields: [userId], references: [id])
-  customer     Customer @relation(fields: [customerId], references: [id])
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId     BigInt   @map("user_id") @db.UnsignedBigInt
+  customerId BigInt   @map("customer_id") @db.UnsignedBigInt
+  total      String   @db.VarChar(10)
+  discount   String   @db.VarChar(10)
+  vat        String   @db.VarChar(10)
+  payable    String   @db.VarChar(10)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
   invoiceProducts InvoiceProduct[]
+
+  users     User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  customers Customer @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("invoices")
 }
 
-// Define the InvoiceProduct model (junction table for many-to-many relationship)
 model InvoiceProduct {
-  id          Int      @id @default(autoincrement())
-  invoiceId   Int
-  productId   Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
-  product     Product  @relation(fields: [productId], references: [id])
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  productId BigInt   @unique @map("product_id") @db.UnsignedBigInt
+  invoiceId BigInt   @map("invoice_id") @db.UnsignedBigInt
+  quantity  String   @db.VarChar(10)
+  salePrice String   @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  users    User    @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  invoices Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  products Product @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("invoice_products")
 }
